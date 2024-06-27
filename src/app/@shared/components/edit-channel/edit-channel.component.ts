@@ -31,6 +31,10 @@ export class EditChannelComponent implements OnInit, AfterViewInit {
   userNameSearch = '';
   userList = [];
   users: any;
+  channelImg: any = {
+    file: null,
+    url: '',
+  };
 
   adminList: any;
 
@@ -53,6 +57,32 @@ export class EditChannelComponent implements OnInit, AfterViewInit {
   }
   ngAfterViewInit(): void {
     this.getUserList();
+  }
+  upload() {
+    if (this.channelImg.file) {
+      this.spinner.show();
+      this.channelService.upload(this.channelImg.file).subscribe({
+        next: (res: any) => {
+          this.spinner.hide();
+          if (this.channelImg.file?.size < 5120000) {
+            if (res.body) {
+              this.channelDetails.profile_pic_name = res?.body?.url;
+              this.saveChanges();
+            }
+          }
+        },
+        error: (err) => {
+          this.spinner.hide();
+          this.channelImg = {
+            file: null,
+            url: '',
+          };
+          return 'Could not upload the file:' + this.channelImg.file.name;
+        },
+      });
+    } else {
+      this.saveChanges();
+    }
   }
 
   getUserDetails(): void {
