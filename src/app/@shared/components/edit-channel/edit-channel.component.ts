@@ -1,18 +1,8 @@
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  OnInit,
-  ViewChild,
-} from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgxSpinnerService } from 'ngx-spinner';
-import { debounceTime, fromEvent } from 'rxjs';
-import { ChannelService } from 'src/app/services/channels.service';
-import { CommunityService } from 'src/app/services/community.service';
-import { ToastService } from 'src/app/services/toast.service';
-import { UserService } from 'src/app/services/user.service';
+import { ChannelService } from './../../../services/channels.service';
+import { ToastService } from './../../../services/toast.service';
 @Component({
   selector: 'app-edit-channel',
   templateUrl: './edit-channel.component.html',
@@ -23,7 +13,6 @@ export class EditChannelComponent implements OnInit, AfterViewInit {
   memberDetails: any = {};
   selectedItems = [];
   selectedusers = [];
-
   communityId: any;
   channelId: any;
   isPage = false;
@@ -35,10 +24,14 @@ export class EditChannelComponent implements OnInit, AfterViewInit {
   adminList: any;
 
   isEdit = false;
+  selectedFile: any;
+  channelImg: any = {
+    file: null,
+    url: '',
+  };
 
   constructor(
     private channelService: ChannelService,
-    private userService: UserService,
     private route: ActivatedRoute,
     private router: Router,
     private spinner: NgxSpinnerService,
@@ -53,6 +46,42 @@ export class EditChannelComponent implements OnInit, AfterViewInit {
   }
   ngAfterViewInit(): void {
     this.getUserList();
+  }
+
+  onFileSelected(event: any) {
+    this.channelImg.file = event.target?.files?.[0];
+    this.selectedFile = URL.createObjectURL(event.target.files[0]);
+  }
+
+  removePostSelectedFile(): void {
+    this.selectedFile = null;
+  }
+
+  upload() {
+    if (this.channelImg.file) {
+      this.spinner.show();
+      this.channelService.upload(this.channelImg.file).subscribe({
+        next: (res: any) => {
+          this.spinner.hide();
+          if (this.channelImg.file?.size < 5120000) {
+            if (res.body) {
+              this.channelDetails.profile_pic_name = res?.body?.url;
+              this.saveChanges();
+            }
+          }
+        },
+        error: (err) => {
+          this.spinner.hide();
+          this.channelImg = {
+            file: null,
+            url: '',
+          };
+          return 'Could not upload the file:' + this.channelImg.file.name;
+        },
+      });
+    } else {
+      this.saveChanges();
+    }
   }
 
   getUserDetails(): void {
@@ -78,6 +107,7 @@ export class EditChannelComponent implements OnInit, AfterViewInit {
     this.getUserList(event.term);
     this.isEdit = true;
   }
+
   slugify = (str: string) => {
     return str?.length > 0
       ? str
@@ -98,23 +128,38 @@ export class EditChannelComponent implements OnInit, AfterViewInit {
     );
   }
 
+  onChangeTag(event: any) {
+    if (!this.isEdit) {
+      this.isEdit = true;
+    }
+    this.channelDetails.Username = event.target.value
+      .replace(/\s+/g, '')
+      .replace(/,+/g, ',');
+  }
+
   saveChanges(): void {
     const id = this.channelDetails.id;
     const upadtedChannelData = {
       profileid: this.channelDetails.profileid,
       profile_pic_name: this.channelDetails.profile_pic_name,
       firstname: this.channelDetails.firstname,
+      Username: this.channelDetails.Username,
       unique_link: this.channelDetails.unique_link,
       feature: this.channelDetails.feature,
+      notificationEmail: this.channelDetails.notificationEmail,
     };
     this.channelService.editChannal(id, upadtedChannelData).subscribe({
       next: (res: any) => {
-        this.getUserDetails();
-        if (this.isEdit) {
-          this.isEdit = false;
+        if (res) {
+          this.getUserDetails();
+          this.removePostSelectedFile();
+          if (this.isEdit) {
+            this.isEdit = false;
+          }
         }
       },
     });
+
     if (this.selectedItems.length) {
       this.selectedItems.forEach((e) => {
         this.createAdmin(e);
@@ -167,15 +212,19 @@ export class EditChannelComponent implements OnInit, AfterViewInit {
   onChangeData(): void {
     this.isEdit = true;
   }
-  resetSelect(event){
+
+  resetSelect(event) {
     if (event?.value?.Id) {
-      this.selectedItems = this.selectedItems.filter(item => item !== event.value.Id);
+      this.selectedItems = this.selectedItems.filter(
+        (item) => item !== event.value.Id
+      );
     } else {
       this.selectedItems = [];
     }
   }
-  onSelectUser(item): void {
-    this.selectedItems.push(item.Id);
+
+  onSelectUser(item: any): void {
+    this.selectedItems.push(item?.Id);
     console.log(item);
   }
 

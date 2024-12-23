@@ -11,6 +11,11 @@ export const navItems: INavData[] = [
     // }
   },
   {
+    name: 'News Feed',
+    url: '/newsfeed',
+    iconComponent: { name: 'cil-notes' },
+  },
+  {
     name: 'Insurance Agents',
     url: '/community',
     iconComponent: { name: 'cil-bookmark' },
@@ -19,6 +24,11 @@ export const navItems: INavData[] = [
     name: 'Insurance Products',
     url: '/pages',
     iconComponent: { name: 'cil-layers' },
+  },
+  {
+    name: 'Research',
+    url: '/research',
+    iconComponent: { name: 'cil-control' },
   },
   // {
   //   name: 'Post List',
@@ -44,5 +54,15 @@ export const navItems: INavData[] = [
     name: 'FT Channels',
     url: '/channels',
     iconComponent: { name: 'cil-screen-desktop' },
+  },
+  {
+    name: 'Support ticket page',
+    url: '/report-bugs',
+    iconComponent: { name: 'cil-list' },
+  },
+  {
+    name: 'Advertisement page',
+    url: '/advertisements',
+    iconComponent: { name: 'cil-playlist-add' },
   },
 ];
